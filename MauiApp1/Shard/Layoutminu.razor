@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase 
 @using Radzen
 @using Radzen.Blazor
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
@@ -7,7 +7,7 @@
 <RadzenLayout style="min-height:100vh;">
     <RadzenHeader style="color:orange;">
         <div style="text-align:center; padding:20px; cursor:pointer;" @onclick="ToggleSidebar">
-            <h1 style="color:orange; margin:0;">Grilled</h1>
+            <h1 style="color:orange; margin:0;">الطعم الاصيل</h1>
         </div>
 
         <RadzenButton click="@ToggleSidebar"
@@ -19,10 +19,7 @@
         <RadzenButton click="@s"
                       style="background:none; border:none; color:orange; font-size:16px; cursor:pointer;">السلطات</RadzenButton>
     </RadzenHeader>
-    <!-- ✅ مهم للتثبيت في الهاتف -->
-    <RadzenSidebar @bind-Visible="@sidebarVisible"
-                   AutoHide="false"
-                   Style="width:200px; background-color:white;">
+    <RadzenSidebar @bind-Visible="@sidebarVisible" Overlay="true" Style="background-color:white;">
         <RadzenPanelMenu Style="border:none;">
             <RadzenPanelMenuItem Text="🏠 الرئيسية" Path="/center" Style="background-color:white;color:orange" />
             <RadzenPanelMenuItem Text=" 🤵‍ الملف الشخصي " Path="/showdata" Style="background-color:white;color:orange" />
@@ -35,9 +32,9 @@
                 @if (Adminall == true)
                 {
                     
-                    <RadzenPanelMenuItem Text="🧑‍🍳 جدول الموظفين" Path="/view-euser" Style="background-color:white;color:orange" />
+                    <RadzenPanelMenuItem Text="🧑‍🍳 جدول الموظفين" Path="/view-useradmin" Style="background-color:white;color:orange" />
                 }
-                 <RadzenPanelMenuItem Text="👤 جدول الزبائن" Path="/viewuser" Style="background-color:white;color:orange" />
+                 <RadzenPanelMenuItem Text="👤 جدول الزبائن" Path="/view-usere" Style="background-color:white;color:orange" />
             
             <RadzenPanelMenuItem Text="📋 جدول الطلبات" Path="/viewrequests" Style="background-color:white;color:orange" />
             }
@@ -62,6 +59,7 @@
     {
         Adminsampil = await localStorage.GetItemAsync<bool?>("adminsampil");
         Adminall = await localStorage.GetItemAsync<bool?>("adminall");
+
          
     }
 

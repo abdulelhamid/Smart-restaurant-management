@@ -24,8 +24,6 @@ namespace MauiApp1
             builder.Logging.AddDebug();
             builder.Services.AddSingleton<FoodService>();
             builder.Services.AddScoped<UserService>();
-           
-            builder.Services.AddScoped<DialogService>();
             builder.Services.AddBlazoredLocalStorage();
             builder.Services.AddScoped<RequestService>();
             builder.Services.AddScoped<Food1Service>();

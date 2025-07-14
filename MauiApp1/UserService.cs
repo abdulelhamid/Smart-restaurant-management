@@ -73,16 +73,17 @@ namespace MauiApp1
 
 
 
-        public async Task AddUserAsync(User newUser)
+       
+
+        public async Task AddUserAsync1(User newUser)
         {
             if (_client == null)
                 throw new InvalidOperationException("Supabase client not initialized");
             newUser.adminsampil = false;
             newUser.adminall = false;
+            // نحفظ المستخدم كما هو بدون تغيير الصلاحيات
             await _client.From<User>().Insert(newUser);
         }
-
-
 
         public async Task<User?> GetUserByNumberAsync(int number)
         {

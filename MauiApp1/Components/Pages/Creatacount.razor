@@ -66,7 +66,7 @@
                 await localStorage.SetItemAsync("adminsampil", newUser.adminsampil);
                 await localStorage.SetItemAsync("adminall", newUser.adminall);
 
-                await userService.AddUserAsync(newUser);
+                await userService.AddUserAsync1(newUser);
 
                 navigationManager.NavigateTo("/center");
             }

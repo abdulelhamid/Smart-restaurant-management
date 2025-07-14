@@ -1,159 +1,133 @@
-﻿@page "/viewuser"
-@using MauiApp1
-@inject UserService UserService
+﻿@page "/view-usere"
 @layout Layoutminu
+@using MauiApp1
 @inject UserService userService
-@inject DialogService DialogService
-@inject NavigationManager NavigationManager
-@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
-<h3 style="text-align:center; font-size:20px;">👤 جدول الزباين </h3>
+<h3 style="text-align:center;">🔐 قائمة المستخدمين الإداريين</h3>
 
-<div style="overflow-x:auto; padding:10px;">
-    <RadzenDataGrid Data="@users" TItem="User"
-                    ColumnWidth="80px"
-                    Style="width:100%; background-color:#FFF4E5; border:1px solid #FFA500; color:#000; font-family:'Segoe UI', sans-serif;">
+<div style="overflow-x:auto; padding:20px;">
+    <RadzenDataGrid Data="@users" TItem="User" RowSelect="@EditSelectedUser"
+                    AllowPaging="true" PageSize="10" ColumnWidth="100px"
+                    Style="background-color:#fff7e6; border:1px solid orange;">
         <Columns>
-            <RadzenDataGridColumn TItem="User" Property="id" Title="🔢 رقم الزبون" />
-            <RadzenDataGridColumn TItem="User" Property="name" Title="👤 الاسم " />
-            <RadzenDataGridColumn TItem="User" Property="password" Title="🔐 الرقم السري" />
-            <RadzenDataGridColumn TItem="User" Property="number" Title="📱 رقم الهاتف" />
-
+            <RadzenDataGridColumn TItem="User" Property="id" Title="🆔 ID" />
+            <RadzenDataGridColumn TItem="User" Property="name" Title="👤 الاسم" />
+            <RadzenDataGridColumn TItem="User" Property="number" Title="📞 الهاتف" />
+            <RadzenDataGridColumn TItem="User" Title="🔓 نوع الصلاحية">
+               
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="User" Title="⚙️ إجراءات">
+                <Template Context="user">
+                    <RadzenButton Icon="edit" Text="تعديل"
+                                  Style="margin-right:5px; background-color:orange; color:white;"
+                                  Click="@(() => StartEdit(user))" />
+                    <RadzenButton Icon="delete" Text="حذف"
+                                  Style="background-color:#c82333; color:white;"
+                                  Click="@(() => DeleteUser(user))" />
+                </Template>
+            </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
-
-    <h3 style="text-align:center;">✏ تعديل بيانات الموظف حسب رقم الهاتف</h3>
-
-    <div style="display: flex; justify-content: center;">
-        <div style="width: 100%; max-width: 500px;">
-            <RadzenTemplateForm Data="@user" TItem="User" Submit="@UpdateUser">
-                <RadzenNumeric TValue="int" @bind-Value="searchNumber" Placeholder="🔢 رقم الموظف" Style="width: 100%;"Max="99"Min="0" />
-                
-
-                <div class="d-flex gap-2 mt-3">
-                    <RadzenButton Text="🔍 جلب البيانات" Click="@FetchUser" Style="width: 49%; background-color:orange" />
-                    <RadzenButton Text="🗑️ حذف" Click="@DeleteUser" ButtonType="ButtonType.Button" Style="width: 49%; background-color:#c82333; color:white;" />
-                </div>
-
-                @if (userFound)
-                {
-                    <RadzenTextBox @bind-Value="user.name" Placeholder="👤 الاسم" Style="width: 100%;" Class="mt-3" />
-                    <RadzenPassword @bind-Value="user.password" Placeholder="🔐 كلمة السر" Style="width: 100%;" Class="mt-3" />
-                    <RadzenNumeric @bind-Value="user.number" Placeholder=" 📞رقم الهاتف  " Style="width: 100%;" Class="mt-3" />
-
-                    <RadzenButton Text="💾 تحديث البيانات" Icon="save" ButtonType="ButtonType.Submit" Class="mt-3" Style="width: 100%; background-color:orange" />
-                }
-                else if (searched)
-                {
-                    <p class="text-danger mt-3">🔍 لم يتم العثور على موظف يحمل رقم الهاتف المدخل</p>
-                }
-
-                @if (!string.IsNullOrEmpty(a))
-                {
-                    <p style="color:red;">@a</p>
-                }
-                @if (!string.IsNullOrEmpty(b))
-                {
-                    <p style="color:green;">@b</p>
-                }
-            </RadzenTemplateForm>
-        </div>
-    </div>
 </div>
 
+@* نموذج التعديل الكامل مع صلاحيات *@
+@if (selectedUser.id != null)
+{
+    <div style="width:100%; max-width:500px; margin:auto; padding:20px;">
+        <RadzenTemplateForm Data="@selectedUser" TItem="User" Submit="@ConfirmUpdate">
+            <RadzenTextBox @bind-Value="selectedUser.name" Placeholder="👤 الاسم"
+                           Style="width:100%; margin-top:10px;" />
+            <RadzenPassword @bind-Value="selectedUser.password" Placeholder="🔐 كلمة السر"
+                            Style="width:100%; margin-top:10px;" />
+            <RadzenNumeric @bind-Value="selectedUser.number" Placeholder="📞 رقم الهاتف"
+                           Style="width:100%; margin-top:10px;" />
+
+            
+
+            <RadzenButton Text="💾 حفظ التعديلات" Icon="save" ButtonType="ButtonType.Submit"
+                          Style="width:100%; margin-top:10px; background-color:green; color:white;" />
+        </RadzenTemplateForm>
+
+        @if (!string.IsNullOrEmpty(errorMsg))
+        {
+            <p style="color:red;">@errorMsg</p>
+        }
+        @if (!string.IsNullOrEmpty(successMsg))
+        {
+            <p style="color:green;">@successMsg</p>
+        }
+    </div>
+}
+
 @code {
-
-
     List<User> users = new();
-    string a;
-    string b;
-    bool? xs;
-    bool? xa;
+    User selectedUser = new();
+    string errorMsg, successMsg;
+
     protected override async Task OnInitializedAsync()
     {
-        xs = await localStorage.GetItemAsync<bool?>("Adminsampil");
-        xa = await localStorage.GetItemAsync<bool?>("Adminall");
-        await UserService.InitAsync();
-        users = (await UserService.GetUsersAsync())
-            .Where(u => u.adminall == false|| u.adminsampil == false) 
-            .OrderByDescending(u => u.id)
-            .ToList();
-    }
-
-    private int searchNumber;
-    private User user = new();
-    private bool userFound = false;
-    private bool searched = false;
-
-    private async Task LoadUsers()
-    {
-        users = (await userService.GetUsersAsync())
-                   .OrderByDescending(u => u.id)
-                   .ToList();
-        StateHasChanged();
-    }
-
-    private async Task FetchUser()
-    {
-        user = await userService.GetUserByNumberAsync(searchNumber) ?? new();
-        userFound = user.id != null;
-        searched = true;
-
-        if (!userFound)
+        try
         {
-            a = "🔍 لم يتم العثور على موظف يحمل رقم الهاتف المدخل";
-            b = string.Empty;
+            await userService.InitAsync();
+            var all = await userService.GetUsersAsync();
+            users = all.Where(u => u.adminall == false || u.adminsampil == false).ToList();
         }
-        else
+        catch (Exception ex)
         {
-            a = string.Empty;
-            b = string.Empty;
+            errorMsg = $"⚠️ خطأ أثناء التحميل: {ex.Message}";
         }
     }
 
-    private async Task UpdateUser()
+    void StartEdit(User user)
+    {
+        selectedUser = new User
+        {
+            id = user.id,
+            name = user.name,
+            password = user.password,
+            number = user.number,
+            adminsampil = user.adminsampil,
+            adminall = user.adminall
+        };
+
+        errorMsg = successMsg = string.Empty;
+    }
+
+    async Task ConfirmUpdate()
+    {
+        if (selectedUser.id == null)
+        {
+            errorMsg = "🚫 لم يتم تحديد مستخدم للتعديل";
+            return;
+        }
+
+        await userService.UpdateUserAsync(selectedUser);
+        successMsg = "✅ تم تعديل البيانات بنجاح";
+        errorMsg = string.Empty;
+        selectedUser = new();
+        await Reload();
+    }
+
+    async Task DeleteUser(User user)
     {
         if (user.id == null)
         {
-            a = "🚫 الرجاء اختيار موظف قبل إجراء التحديث";
-            b = string.Empty;
+            errorMsg = "🚫 لا يمكن حذف مستخدم غير معروف";
             return;
         }
 
-        await userService.UpdateUserAsync(user);
-        b = "📋 تم حفظ التعديلات على بيانات الموظف بنجاح";
-        a = string.Empty;
-        await LoadUsers();
+        await userService.DeleteUserAsync(user);
+        successMsg = "🧹 تم حذف المستخدم";
+        errorMsg = string.Empty;
+        selectedUser = new();
+        await Reload();
     }
 
-    private async Task DeleteUser()
+    async Task Reload()
     {
-        if (searchNumber == 0)
-        {
-            a = "⚠️ الرجاء إدخال رقم الموظف قبل محاولة الحذف";
-            b = string.Empty;
-            return;
-        }
-
-        var userToDelete = await userService.GetUserByNumberAsync(searchNumber);
-
-        if (userToDelete?.id != null)
-        {
-            await userService.DeleteUserAsync(userToDelete);
-            user = new();
-            userFound = false;
-            searched = false;
-            a = string.Empty;
-            b = "🧹 تم حذف الموظف من النظام بنجاح";
-        }
-        else
-        {
-            userFound = false;
-            searched = true;
-            a = "📭 لا يوجد موظف مسجل بهذا الرقم حالياً";
-            b = string.Empty;
-        }
-
-        await LoadUsers();
+        var all = await userService.GetUsersAsync();
+        users = all.Where(u => u.adminall == true || u.adminsampil == true).ToList();
     }
+
+    void EditSelectedUser(User user) => StartEdit(user);
 }
