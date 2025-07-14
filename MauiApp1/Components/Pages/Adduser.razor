@@ -1,0 +1,101 @@
+﻿@page "/add-user"
+@layout Layoutminu
+@inject UserService userService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<h3 style="text-align:center;">➕ إضافة شخص جديد</h3>
+
+<div style="display: flex; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 500px;">
+        <RadzenTemplateForm Data="@newUser" TItem="User" Submit="@AddUser">
+            <RadzenTextBox @bind-Value="newUser.name"
+                           Placeholder="👤 الاسم"
+                           Style="width: 100%;" />
+
+            <RadzenTextBox @bind-Value="newUser.password"
+                           Placeholder="🔐 كلمة السر"
+                           Style="width: 100%; margin-top: 15px;" />
+
+            <RadzenNumeric TValue="int" @bind-Value="newUser.number"
+                           Placeholder="🔢 رقم الزبون"
+                           Style="width: 100%; margin-top: 15px;" />
+            @if (xa == true){
+
+            <div style="margin-top: 15px;">
+                <RadzenCheckBox @bind-Value="newUser.adminsampil"  />
+                <label>📌 صلاحية جزئية</label>
+            </div>
+             <div style="margin-top: 10px;">
+                <RadzenCheckBox @bind-Value="newUser.adminall" />
+                <label>🔐 صلاحية كاملة</label>
+            </div>
+            }
+            <RadzenButton Text="💾 حفظ"
+                          ButtonType="ButtonType.Submit"
+                          Style="width: 100%; margin-top: 20px; background-color: orange;" />
+        </RadzenTemplateForm>
+
+        @if (!string.IsNullOrEmpty(massage))
+        {
+            <p style="color:red; margin-top:10px;">@massage</p>
+        }
+
+        @if (!string.IsNullOrEmpty(ue))
+        {
+            <p style="color:green; margin-top:5px;">@ue</p>
+        }
+    </div>
+</div>
+
+@code {
+    bool? xa;
+    string massage;
+    string ue;
+    private User newUser = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        xa = await localStorage.GetItemAsync<bool?>("Adminall");
+
+        await userService.InitAsync();
+    }
+
+    private async Task AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(newUser.name) ||
+            string.IsNullOrWhiteSpace(newUser.password) ||
+            newUser.number == 0)
+        {
+            massage = "⚠️ الرجاء تعبئة جميع الحقول قبل المتابعة";
+            ue = string.Empty;
+            return;
+        }
+
+        try
+        {
+            var exists = await userService.IsPhoneNumberExistsAsync(newUser.number, newUser.password);
+            if (exists)
+            {
+                massage = "⚠️ هذا الرقم وكلمة السر مستخدمان مسبقًا";
+                ue = string.Empty;
+                return;
+            }
+
+            await userService.AddUserAsync(newUser);
+
+            massage = string.Empty;
+            ue = "✅ تم إضافة الموظف بنجاح";
+
+            newUser = new(); 
+        }
+        catch (Exception ex)
+        {
+            massage = $"❌ حدث خطأ أثناء الإضافة: {ex.Message}";
+            ue = string.Empty;
+        }
+
+        newUser = new User();
+    }
+}

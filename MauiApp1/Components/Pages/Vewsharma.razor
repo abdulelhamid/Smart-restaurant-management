@@ -1,0 +1,133 @@
+﻿@page "/viewfood"
+@using MauiApp1
+@inject Food1Service Food1Service
+@inject RequestService RequestService
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout Layoutminu
+@using Radzen
+
+<h3 style="text-align:center; font-size:20px;">🌯 اصناف الشاورما</h3>
+
+<div style="overflow-x:auto; padding:10px;">
+    <RadzenDataGrid Data="@foods1" TItem="Food1"
+                    ColumnWidth="80px"
+                    RowSelect="@OnRowSelected"
+                    Style="width:100%; background-color:#FFF4E5; border:1px solid #FFA500; color:#000; font-family:'Segoe UI', sans-serif;">
+        <Columns>
+            <RadzenDataGridColumn TItem="Food1" Property="id" Title="🔢 رقم الصنف" />
+            <RadzenDataGridColumn TItem="Food1" Property="food1" Title="🌯 اسم الصنف" />
+            <RadzenDataGridColumn TItem="Food1" Property="pice1" Title="💵 السعر" />
+
+            <RadzenDataGridColumn TItem="Food1" Title="🔢 الكمية">
+                <Template Context="food">
+                    <RadzenNumeric @bind-Value="quantities[food.id]"
+                                   TValue="int"
+                                   Style="width: 80px;"
+                                   Min="1"
+                                   Max="99"
+                                   Change="@(args => OnQuantityChanged(food.id, args))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+<div class="d-flex justify-content-center mt-3">
+    <RadzenButton Text="📥 إضافة الطلب المختار"
+                  Click="@AddSelectedFoodToRequests"
+                  Disabled="@(!IsFoodSelected)"
+                  Style="background-color: #28a745; color: white; font-weight: bold;" />
+</div>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <p style="text-align:center; margin-top: 10px; font-weight:bold; color:@(isError ? "red" : "green")">
+        @statusMessage
+    </p>
+}
+
+@code {
+    List<Food1> foods1 = new();
+    Food1? selectedFood;
+    string? statusMessage;
+    bool isError;
+
+    Dictionary<int, int> quantities = new();
+
+    private bool IsFoodSelected => selectedFood is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await Food1Service.InitAsync();
+            await RequestService.InitAsync();
+
+            foods1 = (await Food1Service.GetFoodsAsync())
+                        .OrderByDescending(f => f.id)
+                        .ToList();
+
+            // 🔢 تهيئة كميات افتراضية
+            foreach (var food in foods1)
+            {
+                quantities[food.id] = 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ خطأ أثناء تحميل البيانات: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private void OnRowSelected(Food1 food)
+    {
+        selectedFood = food;
+        statusMessage = $"✅ تم اختيار: {selectedFood?.food1}";
+        isError = false;
+    }
+
+    private void OnQuantityChanged(int foodId, object value)
+    {
+        if (value is int qty && qty > 0)
+        {
+            quantities[foodId] = qty;
+        }
+    }
+
+    private async Task AddSelectedFoodToRequests()
+    {
+        try
+        {
+            var username = await localStorage.GetItemAsync<string>("username");
+            var number = await localStorage.GetItemAsync<int?>("number");
+
+            if (!string.IsNullOrWhiteSpace(username) && number.HasValue && selectedFood is not null)
+            {
+                int count = quantities.TryGetValue(selectedFood.id, out var q) ? q : 1;
+
+                var newRequest = new Request
+                {
+                    name = username,
+                    number = number.Value,
+                    namefode = selectedFood.food1,
+                    count = count
+                };
+
+                await RequestService.AddRequestAsync(newRequest);
+                statusMessage = $"✅ تم إضافة {count} × {selectedFood.food1} إلى الطلبات";
+                isError = false;
+            }
+            else
+            {
+                statusMessage = "⚠️ تأكد من تسجيل الدخول واختيار صنف";
+                isError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ خطأ أثناء الإضافة: {ex.Message}";
+            isError = true;
+        }
+    }
+}

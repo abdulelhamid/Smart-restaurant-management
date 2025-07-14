@@ -1,0 +1,50 @@
+﻿@page "/showdata"
+@layout Layoutminu
+@using Blazored.LocalStorage
+@inject ILocalStorageService localStorage
+
+<h3 style="text-align:center; color:orange;">📦 معلومات حسابك</h3>
+
+@if (loaded)
+{
+    <div style="max-width:400px; margin:auto; background-color:#FFF4E5; padding:20px; border-radius:10px; font-family:Arial;text-align:center">
+        <p><strong> الاسم👤:</strong> @username</p>
+        <p><strong> كلمة السر🔐:</strong> @password</p>
+        <p><strong> الرقم📞:</strong> @phoneNumber</p>
+        @if (Adminsampil == true && Adminall==true)
+        {
+            <p><strong> الحالة:</strong> @b</p>
+        }else if(Adminsampil==true){
+            <p><strong> الحالة:</strong> @a</p>
+
+        }
+       
+       
+
+    </div>
+}
+else
+{
+    <p style="text-align:center;">جاري تحميل البيانات...</p>
+}
+
+@code {
+    string a = "مشرف";
+    string b = "مشرف ومسئول";
+    string password;
+    string username;
+    int phoneNumber;
+    bool? Adminsampil;
+    bool? Adminall;
+    bool loaded = false;
+    protected override async Task OnInitializedAsync()
+    {
+        username = await localStorage.GetItemAsync<string>("username");
+        password = await localStorage.GetItemAsync<string>("password");
+        phoneNumber = await localStorage.GetItemAsync<int>("number");
+        Adminsampil = await localStorage.GetItemAsync<bool?>("adminsampil");
+        Adminall = await localStorage.GetItemAsync<bool?>("adminall");
+         
+        loaded = true;
+    }
+}

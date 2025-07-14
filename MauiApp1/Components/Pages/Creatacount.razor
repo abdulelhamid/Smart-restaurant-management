@@ -1,0 +1,75 @@
+﻿@page "/creatacount"
+
+@using MauiApp1
+@inject UserService userService
+@inject NavigationManager navigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout Layoutt
+
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+
+<h3 style="text-align:center;margin-top:30px">➕ انشاء حساب جديد</h3>
+
+<div style="display: flex; justify-content: center; padding: 20px;">
+    <div style="width: 100%; max-width: 500px;">
+        <RadzenTemplateForm Data="@newUser" TItem="User" Submit="@AddUser">
+     <RadzenTextBox @bind-Value="newUser.name" Placeholder="👤 الاسم" Style="width: 100%;" />
+            <RadzenPassword @bind-Value="newUser.password" Placeholder="🔐 كلمة السر" Style="width: 100%;" Class="mt-3" />
+            <RadzenNumeric TValue="int" @bind-Value="newUser.number" Placeholder="🔢 رقم الموظف" Style="width: 100%;" Class="mt-3" />
+
+            <RadzenButton Text="💾 إضافة الموظف" ButtonType="ButtonType.Submit"
+                          Class="mt-4" Style="width: 100%;background-color:orange" Click="AddUser" />
+        </RadzenTemplateForm>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <p style="color:red;">@successMessage</p>
+        }
+    </div>
+</div>
+
+@code {
+    private User newUser = new();
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await userService.InitAsync();
+    }
+
+    private async Task AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(newUser.name) ||
+            string.IsNullOrWhiteSpace(newUser.password) ||
+            newUser.number == 0)
+        {
+            successMessage = "⚠️ الرجاء تعبئة جميع الحقول قبل المتابعة";
+            return;
+        }
+        else
+        {
+
+            bool existsNumber = await userService.IsPhoneNumberExistsAsync(newUser.number, newUser.password);
+            if (existsNumber==true)
+            {
+                successMessage = "⚠️ هذا البينات مسجلا مسبقًا ولا يمكن استخدامها";
+            
+                return;
+            }
+            else
+            {
+            
+                await localStorage.SetItemAsync("username", newUser.name);
+                await localStorage.SetItemAsync("password", newUser.password);
+                await localStorage.SetItemAsync("number", newUser.number);
+                await localStorage.SetItemAsync("adminsampil", newUser.adminsampil);
+                await localStorage.SetItemAsync("adminall", newUser.adminall);
+
+                await userService.AddUserAsync(newUser);
+
+                navigationManager.NavigateTo("/center");
+            }
+        }
+    }
+}

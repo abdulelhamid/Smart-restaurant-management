@@ -1,0 +1,43 @@
+﻿@page "/"
+@using MauiApp1.Shard
+@layout Layoutt
+@inject NavigationManager navigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<div style="height:100vh; display:flex; justify-content:center; align-items:center;">
+    <div id="typewriter" style="font-size:24px; color:orange; font-family:Arial;"></div>
+</div>
+
+<script>
+    const text = "مرحبا بك في مطعمنا";
+    let index = 0;
+    const speed = 100;
+
+    function typeNextLetter() {
+        if (index < text.length) {
+            document.getElementById("typewriter").innerHTML += text.charAt(index);
+            index++;
+            setTimeout(typeNextLetter, speed);
+        }
+    }
+
+    typeNextLetter();
+</script>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(2700); 
+
+        var storedUsername = await localStorage.GetItemAsync<string>("username");
+
+        if (!string.IsNullOrEmpty(storedUsername))
+        {
+            navigationManager.NavigateTo("/center");
+        }
+        else
+        {
+            navigationManager.NavigateTo("/login");
+        }
+    }
+}

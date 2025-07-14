@@ -1,0 +1,95 @@
+﻿@page "/viewrequests"
+@using MauiApp1
+@inject RequestService RequestService
+@layout Layoutminu
+
+<h3 style="text-align:center; font-size:20px;">📋 جدول الطلبات</h3>
+
+<div style="overflow-x:auto; padding:10px;">
+    <RadzenDataGrid @ref="dataGrid"
+                    Data="@requests"
+                    TItem="Request"
+                    ColumnWidth="80px"
+                    Style="width:100%; background-color:#FFF4E5; border:1px solid #FFA500; color:#000; font-family:'Segoe UI', sans-serif;">
+        <Columns>
+            <RadzenDataGridColumn TItem="Request" Property="id" Title="🔢 رقم الطلب" />
+            <RadzenDataGridColumn TItem="Request" Property="name" Title="👤 اسم الزبون" />
+            <RadzenDataGridColumn TItem="Request" Property="number" Title="📱 رقم الهاتف" />
+            <RadzenDataGridColumn TItem="Request" Property="namefode" Title="🍽️ اسم الوجبة" />
+            <RadzenDataGridColumn TItem="Request" Property="count" Title="🔢 الكمية" />
+        </Columns>
+    </RadzenDataGrid>
+
+    <div style="text-align:center; margin-top:40px;">
+        <RadzenButton Text="🗑️ حذف أحدث طلب"
+                      Click="@DeleteLastRequest"
+                      Style="background-color:red; color:white; border-radius:10px; padding:10px 20px;" />
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <p style="margin-top:20px; color:orange;">@message</p>
+        }
+    </div>
+</div>
+
+@code {
+    List<Request> requests = new();
+    RadzenDataGrid<Request> dataGrid;
+    System.Threading.Timer? autoRefreshTimer;
+    string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RequestService.InitAsync();
+        await LoadRequests();
+
+        autoRefreshTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadRequests();
+            });
+        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    private async Task LoadRequests()
+    {
+        requests = (await RequestService.GetRequestsAsync())
+                    .OrderByDescending(r => r.id)
+                    .ToList();
+
+        if (dataGrid != null)
+        {
+            await dataGrid.Reload();
+        }
+    }
+
+    private async Task DeleteLastRequest()
+    {
+        try
+        {
+            var allRequests = await RequestService.GetRequestsAsync();
+            var lastRequest = allRequests.OrderByDescending(r => r.id).FirstOrDefault();
+
+            if (lastRequest == null)
+            {
+                message = "⚠️ لا توجد طلبات لحذفها.";
+                return;
+            }
+
+            await RequestService.DeleteRequestByIdAsync(lastRequest.id!.Value);
+            message = $"✅ تم حذف الطلب رقم {lastRequest.id} ({lastRequest.namefode})";
+
+            await LoadRequests(); 
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ حدث خطأ أثناء الحذف: {ex.Message}";
+        }
+    }
+
+    public void Dispose()
+    {
+        autoRefreshTimer?.Dispose();
+    }
+}

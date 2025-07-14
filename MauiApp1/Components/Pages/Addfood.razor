@@ -1,0 +1,104 @@
+﻿@page "/addfood"
+@layout Layoutminu
+@inject FoodService FoodService
+@inject Food1Service Food1Service
+@inject Food2Service Food2Service
+
+<h3 style="text-align:center; color:orange;">➕ إضافة وجبة</h3>
+
+<div style="max-width:400px; margin:auto; padding:20px; color:white;">
+    <RadzenTextBox @bind-Value="foode" Placeholder="اسم الوجبة" Style="width:100%; margin-bottom:10px;" />
+    <RadzenTextBox @bind-Value="pice" Placeholder="السعر" Style="width:100%; margin-bottom:10px;" />
+    <h4 style="color:orange;">اختيار نوع الوجبة</h4>
+
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;color:orange;">
+        <div>
+            <RadzenCheckBox @bind-Value="isMeal" />
+            <label style="margin-left: 5px;">🍛 وجبة </label>
+        </div>
+        <div>
+            
+            <RadzenCheckBox @bind-Value="isShawarma" />
+            <label style="margin-left: 5px;">🌯 شاورما</label>
+        </div>
+        <div>
+            <RadzenCheckBox @bind-Value="issalta" />
+            <label style="margin-left: 5px;">🍚 سلطات </label>
+        </div>
+    </div>
+    <RadzenButton Text=" 💾 حفظ " Click="@Save" Style="width:100%; background-color:orange; color:black; border-radius:10px;" />
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p style="margin-top:10px; color:lime;">@message</p>
+    }
+</div>
+
+@code {
+    private string foode;
+    private string pice;
+    private string message;
+
+    private bool isShawarma;
+    private bool isMeal;
+    private bool issalta;
+   
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FoodService.InitAsync();
+        await Food1Service.InitAsync();
+        await Food2Service.InitAsync();
+    }
+
+    
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(foode) || string.IsNullOrWhiteSpace(pice))
+        {
+            message = "⚠️ الرجاء تعبئة جميع الحقول";
+            return;
+        }
+
+        if (!isShawarma && !isMeal && !issalta)
+        {
+            message = "⚠️ الرجاء اختيار نوع الوجبة قبل الحفظ";
+            return;
+        }
+
+        var newFood = new Food
+        {
+            foode = foode,
+            pice = pice,
+        };
+        var newFood1 = new Food1
+        {
+            food1 = foode,
+            pice1 = pice,
+        };
+        var newFood2 = new Food2
+        {
+            food2 = foode,
+            pice2 = pice,
+        };
+
+        if (isShawarma==true)
+        {
+            await Food1Service.AddFoodAsync(newFood1);
+        }
+        else if (isMeal==true)
+        {
+            await FoodService.AddFoodAsync(newFood);
+        }
+        else if (issalta == true)
+        {
+            await Food2Service.AddFoodAsync(newFood2);
+        }
+
+        message = "✅ تمت إضافة الوجبة بنجاح";
+        foode = string.Empty;
+        pice = string.Empty;
+        isShawarma = false;
+        isMeal = false;
+    }
+}

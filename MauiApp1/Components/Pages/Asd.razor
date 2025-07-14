@@ -1,0 +1,105 @@
+﻿@page "/viewf"
+@using MauiApp1
+@inject Food1Service Food1Service
+@inject RequestService RequestService
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout Layoutminu
+@using Radzen
+
+<h3 style="text-align:center; font-size:20px;">🌯 اصناف الشاورما</h3>
+
+<div style="overflow-x:auto; padding:10px;">
+    <RadzenDataGrid Data="@foods1" TItem="Food1"
+                    ColumnWidth="80px"
+                    RowSelect="@OnRowSelected"
+                    Style="width:100%; background-color:#FFF4E5; border:1px solid #FFA500; color:#000; font-family:'Segoe UI', sans-serif;">
+        <Columns>
+            <RadzenDataGridColumn TItem="Food1" Property="id" Title="🔢 رقم الصنف" />
+            <RadzenDataGridColumn TItem="Food1" Property="food1" Title="🌯 اسم الصنف" />
+            <RadzenDataGridColumn TItem="Food1" Property="pice1" Title="💵 السعر" />
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+<div class="d-flex justify-content-center mt-3">
+    <RadzenButton Text="📥 إضافة الطلب المختار"
+                  Icon="add_circle"
+                  Click="@AddSelectedFoodToRequests"
+                  Disabled="@(!IsFoodSelected)"
+                  Style="background-color: #28a745; color: white; font-weight: bold;" />
+</div>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <p style="text-align:center; margin-top: 10px; font-weight:bold; color:@(isError ? "red" : "green")">
+        @statusMessage
+    </p>
+}
+
+@code {
+    List<Food1> foods1 = new();
+    Food1? selectedFood;
+    string? statusMessage;
+    bool isError;
+
+    private bool IsFoodSelected => selectedFood is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await Food1Service.InitAsync();
+            await RequestService.InitAsync();
+
+            foods1 = (await Food1Service.GetFoodsAsync())
+                        .OrderByDescending(f => f.id)
+                        .ToList();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ خطأ أثناء تحميل البيانات: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private void OnRowSelected(Food1 food)
+    {
+        selectedFood = food;
+        statusMessage = $"✅ تم اختيار: {selectedFood?.food1}";
+        isError = false;
+    }
+
+    private async Task AddSelectedFoodToRequests()
+    {
+        try
+        {
+            var username = await localStorage.GetItemAsync<string>("username");
+            var number = await localStorage.GetItemAsync<int?>("number");
+
+            if (!string.IsNullOrWhiteSpace(username) && number.HasValue && selectedFood is not null)
+            {
+                var newRequest = new Request
+                {
+                    name = username,
+                    number = number.Value,
+                    namefode = selectedFood.food1,
+                    count = 1
+                };
+
+                await RequestService.AddRequestAsync(newRequest);
+                statusMessage = $"✅ تم إضافة {selectedFood.food1} إلى الطلبات";
+                isError = false;
+            }
+            else
+            {
+                statusMessage = "⚠️ تأكد من تسجيل الدخول واختيار صنف";
+                isError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"❌ خطأ أثناء الإضافة: {ex.Message}";
+            isError = true;
+        }
+    }
+}

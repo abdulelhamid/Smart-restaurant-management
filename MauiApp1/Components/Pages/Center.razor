@@ -1,0 +1,17 @@
+﻿@page "/centerr"
+@layout Layoutminu
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager n
+<RadzenButton Text="delet" Click="ClearUserData"/>
+@code {
+    private async Task ClearUserData()
+{
+        await localStorage.RemoveItemAsync("username");
+        await localStorage.RemoveItemAsync("password");
+        await localStorage.RemoveItemAsync("number");
+        await localStorage.RemoveItemAsync("adminsampil");
+        await localStorage.RemoveItemAsync("adminall");
+         n.NavigateTo("/");
+}
+
+}

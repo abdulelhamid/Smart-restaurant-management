@@ -1,0 +1,61 @@
+﻿@page "/login"
+@using MauiApp1
+@using Radzen
+@using Radzen.Blazor
+@inject UserService UserService
+@inject NavigationManager navigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@layout Layoutt
+
+<div style="height:100vh; display:flex; justify-content:center; align-items:center;">
+    <div style="width:300px; text-align:center; font-family:Arial;">
+        <h2 style="margin-bottom:30px; color:orange;">Welcome</h2>
+        <RadzenTextBox @bind-Value="username" Placeholder="👤 الاسم" Style="width: 100%;" />
+        <RadzenPassword @bind-Value="password" Placeholder="🔐 كلمة السر" Style="width: 100%;" Class="mt-3" />
+
+        <RadzenButton Click="CheckLogin" Text="📥 تسجيل دخول" ButtonType="ButtonType.Submit" Class="mt-4"
+                      Style="width: 100%; background-color:orange; margin-inline:5px" />
+
+        <a href="/creatacount" style="color:orange; text-decoration:none;">انشاء حساب</a>
+
+        @if (loginFailed)
+        {
+            <p style="color:red; margin-top:10px;">❌ اسم المستخدم أو كلمة المرور غير صحيحة</p>
+        }
+    </div>
+</div>
+
+@code {
+    string username;
+    string password;
+    bool loginFailed = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UserService.InitAsync();
+    }
+
+    async Task CheckLogin()
+    {
+        loginFailed = false;
+
+        var allUsers = await UserService.GetUsersAsync();
+
+        var user = allUsers.FirstOrDefault(u => u.name == username && u.password == password);
+
+        if (user != null)
+        {
+            await localStorage.SetItemAsync("username", user.name);
+            await localStorage.SetItemAsync("password", user.password);
+            await localStorage.SetItemAsync("number", user.number);
+            await localStorage.SetItemAsync("adminsampil", user.adminsampil);
+            await localStorage.SetItemAsync("adminall", user.adminall);
+
+            navigationManager.NavigateTo("/center");
+        }
+        else
+        {
+            loginFailed = true;
+        }
+    }
+}

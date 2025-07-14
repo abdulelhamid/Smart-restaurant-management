@@ -1,0 +1,55 @@
+﻿@page "/addfood1"
+@inject Food1Service Food1Service
+
+<h3 style="text-align:center; color:orange;">➕ إضافة صنف إلى جدول Food1</h3>
+
+<div style="max-width:400px; margin:auto; padding:20px; color:white;">
+    <RadzenTextBox @bind-Value="food1" Placeholder="🍽️ اسم الوجبة" Style="width:100%; margin-bottom:10px;" />
+    <RadzenTextBox @bind-Value="pice1" Placeholder="💰 السعر" Style="width:100%; margin-bottom:10px;" />
+
+    <RadzenButton Text=" 💾 حفظ " Click="@Save" Style="width:100%; background-color:orange; color:black; border-radius:10px;" />
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p style="margin-top:10px; color:lime;">@message</p>
+    }
+</div>
+
+@code {
+    private string food1;
+    private string pice1;
+    private string message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Food1Service.InitAsync();
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(food1) || string.IsNullOrWhiteSpace(pice1))
+        {
+            message = "⚠️ الرجاء تعبئة جميع الحقول";
+            return;
+        }
+
+        var newFood1 = new Food1
+        {
+            food1 = food1,
+            pice1 = pice1
+        };
+
+        try
+        {
+            await Food1Service.AddFoodAsync(newFood1);
+            message = "✅ تم حفظ الوجبة في جدول Food1 بنجاح";
+
+            food1 = string.Empty;
+            pice1 = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            message = $"❌ حدث خطأ أثناء الحفظ: {ex.Message}";
+        }
+    }
+}
