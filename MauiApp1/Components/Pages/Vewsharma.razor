@@ -67,7 +67,6 @@
                         .OrderByDescending(f => f.id)
                         .ToList();
 
-            // 🔢 تهيئة كميات افتراضية
             foreach (var food in foods1)
             {
                 quantities[food.id] = 1;

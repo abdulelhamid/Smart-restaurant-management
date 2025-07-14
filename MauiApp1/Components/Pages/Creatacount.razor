@@ -69,7 +69,6 @@
             return;
         }
 
-        // حفظ صلاحيات المستخدم الجديد
         newUser.adminall = false;
         newUser.adminsampil = false;
 
@@ -84,8 +83,7 @@
         message = "✅ تم إنشاء الحساب بنجاح";
         messageColor = "green";
 
-        // التوجيه بعد التسجيل
-        await Task.Delay(1000); // يعطي لحظة لعرض الرسالة
+        await Task.Delay(1000); 
         navigation.NavigateTo("/center");
     }
 }
