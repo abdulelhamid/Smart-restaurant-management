@@ -20,15 +20,7 @@
                            Placeholder="📞 رقم الهاتف"
                            Style="width:100%; margin-top:15px;" />
 
-            <div style="margin-top:15px;">
-                <RadzenCheckBox @bind-Value="newUser.adminsampil" />
-                <label style="margin-left:8px;">📌 صلاحية جزئية</label>
-            </div>
-
-            <div style="margin-top:10px;">
-                <RadzenCheckBox @bind-Value="newUser.adminall" />
-                <label style="margin-left:8px;">🔐 صلاحية كاملة</label>
-            </div>
+        
 
             <RadzenButton Text="💾 حفظ"
                           ButtonType="ButtonType.Submit"
@@ -51,7 +43,6 @@
     User newUser = new();
     string errorMessage;
     string successMessage;
-
     protected override async Task OnInitializedAsync()
     {
         try
