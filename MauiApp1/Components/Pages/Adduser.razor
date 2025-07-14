@@ -86,10 +86,10 @@
                 return;
             }
 
-            await userService.AddUserAsync1(newUser); // تستخدم الدالة التي لا تغير الصلاحيات
+            await userService.AddUserAsync1(newUser); 
 
             successMessage = "✅ تم إضافة المستخدم بنجاح";
-            newUser = new(); // إعادة تهيئة النموذج
+            newUser = new(); 
         }
         catch (Exception ex)
         {
