@@ -1,75 +1,91 @@
 ﻿@page "/creatacount"
+@layout Layoutt
 
 @using MauiApp1
 @inject UserService userService
-@inject NavigationManager navigationManager
+@inject NavigationManager navigation
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@layout Layoutt
 
-@inject DialogService DialogService
-@inject NavigationManager NavigationManager
+<h3 style="text-align:center; margin-top:30px;">➕ انشاء حساب جديد</h3>
 
-<h3 style="text-align:center;margin-top:30px">➕ انشاء حساب جديد</h3>
+<div style="display:flex; justify-content:center; padding:20px;">
+    <div style="width:100%; max-width:500px;">
+        <RadzenTemplateForm Data="@newUser" TItem="User" Submit="@Register">
+            <RadzenTextBox @bind-Value="newUser.name"
+                           Placeholder="👤 الاسم الكامل"
+                           Style="width:100%;" />
 
-<div style="display: flex; justify-content: center; padding: 20px;">
-    <div style="width: 100%; max-width: 500px;">
-        <RadzenTemplateForm Data="@newUser" TItem="User" Submit="@AddUser">
-     <RadzenTextBox @bind-Value="newUser.name" Placeholder="👤 الاسم" Style="width: 100%;" />
-            <RadzenPassword @bind-Value="newUser.password" Placeholder="🔐 كلمة السر" Style="width: 100%;" Class="mt-3" />
-            <RadzenNumeric TValue="int" @bind-Value="newUser.number" Placeholder="🔢 رقم الموظف" Style="width: 100%;" Class="mt-3" />
+            <RadzenPassword @bind-Value="newUser.password"
+                            Placeholder="🔒 كلمة المرور"
+                            Style="width:100%; margin-top:15px;" />
 
-            <RadzenButton Text="💾 إضافة الموظف" ButtonType="ButtonType.Submit"
-                          Class="mt-4" Style="width: 100%;background-color:orange" Click="AddUser" />
+            <RadzenNumeric TValue="int" @bind-Value="newUser.number"
+                           Placeholder="📞 رقم الهاتف"
+                           Style="width:100%; margin-top:15px;" />
+
+            <RadzenButton Text="🔐 تسجيل"
+                          ButtonType="ButtonType.Submit"
+                          Style="width:100%; margin-top:20px; background-color:orange;" />
         </RadzenTemplateForm>
 
-        @if (!string.IsNullOrEmpty(successMessage))
+        @if (!string.IsNullOrEmpty(message))
         {
-            <p style="color:red;">@successMessage</p>
+            <p style="margin-top:15px; color:@(messageColor); text-align:center;">@message</p>
         }
     </div>
 </div>
 
 @code {
-    private User newUser = new();
-    private string? successMessage;
+    User newUser = new();
+    string message = string.Empty;
+    string messageColor = "red";
 
     protected override async Task OnInitializedAsync()
     {
         await userService.InitAsync();
+
+        newUser.adminall = false;
+        newUser.adminsampil = false;
     }
 
-    private async Task AddUser()
+    async Task Register()
     {
+        message = string.Empty;
+
         if (string.IsNullOrWhiteSpace(newUser.name) ||
             string.IsNullOrWhiteSpace(newUser.password) ||
             newUser.number == 0)
         {
-            successMessage = "⚠️ الرجاء تعبئة جميع الحقول قبل المتابعة";
+            message = "⚠️ جميع الحقول مطلوبة";
+            messageColor = "red";
             return;
         }
-        else
+
+        bool isUsed = await userService.IsPhoneNumberExistsAsync(newUser.number, newUser.password);
+        if (isUsed)
         {
-
-            bool existsNumber = await userService.IsPhoneNumberExistsAsync(newUser.number, newUser.password);
-            if (existsNumber==true)
-            {
-                successMessage = "⚠️ هذا البينات مسجلا مسبقًا ولا يمكن استخدامها";
-            
-                return;
-            }
-            else
-            {
-            
-                await localStorage.SetItemAsync("username", newUser.name);
-                await localStorage.SetItemAsync("password", newUser.password);
-                await localStorage.SetItemAsync("number", newUser.number);
-                await localStorage.SetItemAsync("adminsampil", newUser.adminsampil);
-                await localStorage.SetItemAsync("adminall", newUser.adminall);
-
-                await userService.AddUserAsync1(newUser);
-
-                navigationManager.NavigateTo("/center");
-            }
+            message = "⚠️ هذا الرقم أو كلمة السر مستخدمة من قبل";
+            messageColor = "red";
+            return;
         }
+
+        // حفظ صلاحيات المستخدم الجديد
+        newUser.adminall = false;
+        newUser.adminsampil = false;
+
+        await userService.AddUserAsync1(newUser);
+
+        await localStorage.SetItemAsync("username", newUser.name);
+        await localStorage.SetItemAsync("number", newUser.number);
+        await localStorage.SetItemAsync("password", newUser.password);
+        await localStorage.SetItemAsync("adminsampil", false);
+        await localStorage.SetItemAsync("adminall", false);
+
+        message = "✅ تم إنشاء الحساب بنجاح";
+        messageColor = "green";
+
+        // التوجيه بعد التسجيل
+        await Task.Delay(1000); // يعطي لحظة لعرض الرسالة
+        navigation.NavigateTo("/center");
     }
 }

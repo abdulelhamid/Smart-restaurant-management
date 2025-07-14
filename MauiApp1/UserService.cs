@@ -79,9 +79,7 @@ namespace MauiApp1
         {
             if (_client == null)
                 throw new InvalidOperationException("Supabase client not initialized");
-            newUser.adminsampil = false;
-            newUser.adminall = false;
-            // نحفظ المستخدم كما هو بدون تغيير الصلاحيات
+         
             await _client.From<User>().Insert(newUser);
         }
 

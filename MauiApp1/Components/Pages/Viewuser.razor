@@ -2,8 +2,9 @@
 @layout Layoutminu
 @using MauiApp1
 @inject UserService userService
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
-<h3 style="text-align:center;">🔐 قائمة المستخدمين الإداريين</h3>
+<h3 style="text-align:center;">🔐 قائمة الزبائن</h3>
 
 <div style="overflow-x:auto; padding:20px;">
     <RadzenDataGrid Data="@users" TItem="User" RowSelect="@EditSelectedUser"
@@ -13,9 +14,7 @@
             <RadzenDataGridColumn TItem="User" Property="id" Title="🆔 ID" />
             <RadzenDataGridColumn TItem="User" Property="name" Title="👤 الاسم" />
             <RadzenDataGridColumn TItem="User" Property="number" Title="📞 الهاتف" />
-            <RadzenDataGridColumn TItem="User" Title="🔓 نوع الصلاحية">
-               
-            </RadzenDataGridColumn>
+        
             <RadzenDataGridColumn TItem="User" Title="⚙️ إجراءات">
                 <Template Context="user">
                     <RadzenButton Icon="edit" Text="تعديل"
@@ -40,9 +39,16 @@
                             Style="width:100%; margin-top:10px;" />
             <RadzenNumeric @bind-Value="selectedUser.number" Placeholder="📞 رقم الهاتف"
                            Style="width:100%; margin-top:10px;" />
-
-            
-
+@if(adminalll==true){
+            <div style="margin-top:10px;">
+                <RadzenCheckBox @bind-Value="selectedUser.adminsampil" />
+                <label style="margin-left:8px;">📌 صلاحية جزئية</label>
+            </div>
+            <div style="margin-top:10px;">
+                <RadzenCheckBox @bind-Value="selectedUser.adminall" />
+                <label style="margin-left:8px;">🔐 صلاحية كاملة</label>
+            </div>
+}
             <RadzenButton Text="💾 حفظ التعديلات" Icon="save" ButtonType="ButtonType.Submit"
                           Style="width:100%; margin-top:10px; background-color:green; color:white;" />
         </RadzenTemplateForm>
@@ -62,11 +68,16 @@
     List<User> users = new();
     User selectedUser = new();
     string errorMsg, successMsg;
+    bool? adminalll;
 
     protected override async Task OnInitializedAsync()
     {
+        adminalll = await localStorage.GetItemAsync<bool?>("adminall");
+
+
         try
         {
+
             await userService.InitAsync();
             var all = await userService.GetUsersAsync();
             users = all.Where(u => u.adminall == false || u.adminsampil == false).ToList();
