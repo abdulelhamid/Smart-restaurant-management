@@ -80,7 +80,7 @@
 
             await userService.InitAsync();
             var all = await userService.GetUsersAsync();
-            users = all.Where(u => u.adminall == false || u.adminsampil == false).ToList();
+            users = all.Where(u => u.adminall == false && u.adminsampil == false).ToList();
         }
         catch (Exception ex)
         {
@@ -136,7 +136,7 @@
     async Task Reload()
     {
         var all = await userService.GetUsersAsync();
-        users = all.Where(u => u.adminall == true || u.adminsampil == true).ToList();
+        users = all.Where(u => u.adminall == false && u.adminsampil == false).ToList();
     }
 
     void EditSelectedUser(User user) => StartEdit(user);

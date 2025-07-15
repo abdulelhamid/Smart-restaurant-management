@@ -2,6 +2,7 @@
 @layout Layoutt
 
 @using MauiApp1
+
 @inject UserService userService
 @inject NavigationManager navigation
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
@@ -44,8 +45,7 @@
     {
         await userService.InitAsync();
 
-        newUser.adminall = false;
-        newUser.adminsampil = false;
+        
     }
 
     async Task Register()
